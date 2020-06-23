@@ -1,16 +1,8 @@
-import AIBase from './AIBase'
 import { MOVEMENT_DIRECTION } from '../game'
 import { TILE_SNAKE } from '../../constants/contentTypes'
-export default class SimpleAIWithTailDodgingFluent extends AIBase{
-	constructor(props){
-		super(props)
-		const self = this
-		this.onGameStarted.subscribe(()=>this.takeBestMove(self))
-		this.onMoveCompleted.subscribe(()=>this.takeBestMove(self))
-	}
-	takeBestMove(self){
-		console.log('nextMove')
-		const {foodTile, snakeHead, direction } = self
+export default class SimpleAIWithTailDodgingFluent{
+	takeMove(game){
+		const {foodTile, snakeHead, direction } = game
 
 		let yDiff = foodTile[0]-snakeHead[0] // >0 DOWN
 		let xDiff = foodTile[1]-snakeHead[1] // >0 RIGHT
@@ -21,29 +13,29 @@ export default class SimpleAIWithTailDodgingFluent extends AIBase{
 			if(xDiff>0){ //right
 				switch(direction){
 					case MOVEMENT_DIRECTION.BOTTOM:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 					case MOVEMENT_DIRECTION.RIGHT:
 
 						break
 					case MOVEMENT_DIRECTION.TOP:
-						action = self.turnRight
+						action = game.turnRight
 						break
 					case MOVEMENT_DIRECTION.LEFT:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 				}
 			}
 			else if(xDiff < 0){ //left
 				switch(direction){
 					case MOVEMENT_DIRECTION.BOTTOM:
-						action = self.turnRight
+						action = game.turnRight
 						break
 					case MOVEMENT_DIRECTION.RIGHT:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 					case MOVEMENT_DIRECTION.TOP:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 					case MOVEMENT_DIRECTION.LEFT:
 
@@ -57,29 +49,29 @@ export default class SimpleAIWithTailDodgingFluent extends AIBase{
 					case MOVEMENT_DIRECTION.BOTTOM:
 						break
 					case MOVEMENT_DIRECTION.RIGHT:
-						action = self.turnRight
+						action = game.turnRight
 						break
 					case MOVEMENT_DIRECTION.TOP:
-						action = self.turnRight
+						action = game.turnRight
 						break
 					case MOVEMENT_DIRECTION.LEFT:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 				}
 			}
 			else if(yDiff < 0){//up
 				switch(direction){
 					case MOVEMENT_DIRECTION.BOTTOM:
-						action = self.turnRight
+						action = game.turnRight
 						break
 					case MOVEMENT_DIRECTION.RIGHT:
-						action = self.turnLeft
+						action = game.turnLeft
 						break
 					case MOVEMENT_DIRECTION.TOP:
 	
 						break
 					case MOVEMENT_DIRECTION.LEFT:
-						action = self.turnRight
+						action = game.turnRight
 						break
 				}
 			}
@@ -93,22 +85,22 @@ export default class SimpleAIWithTailDodgingFluent extends AIBase{
 			else focusY()
 		}
 
-		let moves = shuffle([self.turnLeft,self.turnRight,self.turnForward])
+		let moves = shuffle([game.turnLeft,game.turnRight,game.turnForward])
 		for(let move of [action,...moves]){
-			if(move) move(self)
+			if(move) move(game)
 
-			let nextTile = self._getNextTile(self,self._bufferedDirection)
+			let nextTile = game._getNextTile(game,game._bufferedDirection)
 			if(!nextTile) continue
-			let boardTile = self.board[nextTile[0]][nextTile[1]]
+			let boardTile = game.board[nextTile[0]][nextTile[1]]
 			
 			if((boardTile & TILE_SNAKE) == 0){
 				break
 			}
 		}
 
-		let c = () =>	self.takeTurn(self)
-		if(self.interval === 0)	c()
-		else setTimeout(c,self.interval*1000)
+		let c = () =>	game.takeTurn(game)
+		if(game.interval === 0)	c()
+		else setTimeout(c,game.interval*1000)
 	}
 }
 

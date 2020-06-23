@@ -14,4 +14,7 @@ export class EventHandler{
 			listener(data)
 		}
 	}
+	clear(){
+		this.listeners = []
+	}
 }

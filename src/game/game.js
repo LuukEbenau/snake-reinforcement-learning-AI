@@ -16,7 +16,7 @@ export class SnakeGame{
 	/** every time the board is updated */
 	onBoardUpdated = new EventHandler() 
 	/** every time a move is executed */
-	onMoveCompleted = new EventHandler() 
+	onMoveReady = new EventHandler() 
 
 	direction
 	
@@ -33,16 +33,17 @@ export class SnakeGame{
 	snakeHead
 	snake = new queue()
 
-	constructor({rows, cols, initialSize=5}){
-
+	constructor({rows, cols, initialSize=5, interval}){
 		this._initialSize = initialSize
 		this._rows = rows
 		this._cols = cols
 
 		this._generateBoard()
+
+		this.interval = interval || 0
 	}
 
-	setupBoard(){
+	setupBoard(player1){
 		console.log('setup board')
 		let updatedTiles = []
 		for(let y = 0; y< this.board.length; y++){
@@ -58,6 +59,9 @@ export class SnakeGame{
 		this._spawnFood(this)
 		this.onBoardUpdated.trigger({updatedTiles:updatedTiles})
 		this.initialized = true
+
+		this.onMoveReady.clear()
+		this.onMoveReady.subscribe(() => player1.takeMove(this))
 	}
 
 	//#region public methods
@@ -73,6 +77,7 @@ export class SnakeGame{
 		this.started = true
 
 		this.onGameStarted.trigger()
+		this.onMoveReady.trigger()
 	}
 
 	pause(){
@@ -186,7 +191,6 @@ export class SnakeGame{
 			 if(game.board[y][x] === TILE_EMPTY){
 				 game.board[y][x] = TILE_FOOD
 				 const coord = [y,x]
-				 console.log('spawning food at', coord)
 				 this.foodTile = coord
 				 return coord
 			 }
@@ -235,7 +239,7 @@ export class SnakeGame{
 		game.onBoardUpdated.trigger({
 			updatedTiles
 		})
-		game.onMoveCompleted.trigger()
+		game.onMoveReady.trigger()
 	}
 
 	//#endregion
