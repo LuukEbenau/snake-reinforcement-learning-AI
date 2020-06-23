@@ -1,10 +1,9 @@
-import React, { Component, createRef } from 'react'
+import React, { Component } from 'react'
 import Tile from '../tile'
 import styles from './board.module.scss'
-import { SnakeGame } from '../../game/game'
-import { TILE_SNAKE, TILE_EMPTY } from '../../constants/contentTypes'
 import KeyboardEventHandler from 'react-keyboard-event-handler';
-import {Row, Container, Col} from 'react-bootstrap'
+import {Row, Container} from 'react-bootstrap'
+import AIGame from '../../game/ai/simpleAIWithTailDodgingFluent'
 class Board extends Component {
 	constructor(props) {
 		super(props)
@@ -16,16 +15,17 @@ class Board extends Component {
 			cols: this.props.cols,
 			gameStarted:false
 		}
-		this.game = new SnakeGame({rows: this.props.rows, cols: this.props.cols, speed: 6})
+		this.game = new AIGame({rows: this.props.rows, cols: this.props.cols, speed: 6, interval:.0000001})
 
 		this.tileSize = this.state.boardWidth / this.game.board.length
 
-		this.game.onGameStarted = () => console.log('game started')
-		this.game.onGameEnded = (e) => {
+		this.game.onGameStarted.subscribe(() => console.log('game started'))
+		this.game.onGameEnded.subscribe((e) => {
 			this.setState({gameStarted:false})
 			console.log('game ended',e)
-		}
-		this.game.onGameTick = e => this.onGameTick(e)
+		})
+
+		this.game.onBoardUpdated.subscribe(e => this.onGameTick(e))
 	}
 	onGameTick({updatedTiles}){
 		this.updateBoard(updatedTiles)
@@ -65,7 +65,7 @@ class Board extends Component {
 	startGame(){
 		this.game.setupBoard()
 		this.setState({gameStarted:true})
-		let timeout = 3
+		let timeout = 5
 		let timeoutHandle = setInterval(()=>{
 			if(timeout-- === 0){
 				console.log('timeout finished')
@@ -75,7 +75,7 @@ class Board extends Component {
 			else{
 				console.log(timeout+' seconds')
 			}
-		},1000)
+		},100)
 	}
 
 	updateBoard(tilesToUpdate){

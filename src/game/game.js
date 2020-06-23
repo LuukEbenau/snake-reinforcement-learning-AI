@@ -1,6 +1,6 @@
 import queue from 'queue-fifo'
 import { TILE_EMPTY, TILE_SNAKE, TILE_FOOD, TILE_SNAKE_HEAD } from '../constants/contentTypes'
-
+import {EventHandler} from './eventHandler'
 export const MOVEMENT_DIRECTION = {
 	TOP:0,
 	RIGHT:1,
@@ -11,11 +11,15 @@ export class SnakeGame{
 	initialized = false
 	started=false
 	paused=false
-	onGameEnded = null
-	onGameStarted = null
-	onGameTick = null
+	onGameEnded = new EventHandler() 
+	onGameStarted = new EventHandler() 
+	/** every time the board is updated */
+	onBoardUpdated = new EventHandler() 
+	/** every time a move is executed */
+	onMoveCompleted = new EventHandler() 
+
 	direction
-	turnTimer
+	
 	stats = {
 		score:0,
 		ticks:0,
@@ -26,12 +30,11 @@ export class SnakeGame{
 	_cols
 	_bufferedDirection
 	board = []
-
+	snakeHead
 	snake = new queue()
-	snakeHead = null
 
-	constructor({rows, cols, speed = 1, initialSize=5}){
-		this.speed = speed
+	constructor({rows, cols, initialSize=5}){
+
 		this._initialSize = initialSize
 		this._rows = rows
 		this._cols = cols
@@ -53,7 +56,7 @@ export class SnakeGame{
 		this._bufferedDirection = null
 		this._spawnSnake(this)
 		this._spawnFood(this)
-		this.onGameTick({updatedTiles:updatedTiles})
+		this.onBoardUpdated.trigger({updatedTiles:updatedTiles})
 		this.initialized = true
 	}
 
@@ -68,13 +71,8 @@ export class SnakeGame{
 			ticks:0,
 		}
 		this.started = true
-		let interval = (1 / this.speed) * 1000
-		console.log('starting with interval',interval)
-		const game = this
 
-		this.turnTimer = setInterval(()=> {this._onGameTick(game)}, interval)
-
-		if(this.onGameStarted) this.onGameStarted()
+		this.onGameStarted.trigger()
 	}
 
 	pause(){
@@ -84,17 +82,20 @@ export class SnakeGame{
 		this.paused = false
 	}
 
-
-	turnRight(){
-		let direction = this.direction+1
-		if(direction > MOVEMENT_DIRECTION.LEFT) direction = MOVEMENT_DIRECTION.TOP
-		this._bufferedDirection = direction
+	turnForward(self){
+		self._bufferedDirection = self.direction
 	}
 
-	turnLeft(){
-		let direction = this.direction-1
+	turnRight(self){
+		let direction = self.direction+1
+		if(direction > MOVEMENT_DIRECTION.LEFT) direction = MOVEMENT_DIRECTION.TOP
+		self._bufferedDirection = direction
+	}
+
+	turnLeft(self){
+		let direction = self.direction-1
 		if(direction < MOVEMENT_DIRECTION.TOP) direction = MOVEMENT_DIRECTION.LEFT
-		this._bufferedDirection = direction
+		self._bufferedDirection = direction
 	}
 	//#endregion
 
@@ -133,7 +134,7 @@ export class SnakeGame{
 		}
 	}
 
-	_onGameTick(game){
+	takeTurn(game){
 		if(game.started && !game.paused){
 			game._move(game)
 		}
@@ -159,10 +160,12 @@ export class SnakeGame{
 				console.error('unknown direction',direction)
 				return
 		}
+		if(newTile[0] < 0 || newTile[0] >= this._rows || newTile[1] < 0 || newTile[1] >= this._cols) return null
 		return newTile
 	}
 
 	_collisionOccured(game, tile){
+		if(!tile) return true
 		let x = tile[1]
 		let y = tile[0]
 		if(x<0|| y<0) return true
@@ -182,8 +185,10 @@ export class SnakeGame{
 			 let y = Math.floor(Math.random() * (game._rows - 1))
 			 if(game.board[y][x] === TILE_EMPTY){
 				 game.board[y][x] = TILE_FOOD
-				 console.log('spawning food at',[y,x])
-				 return [y,x]
+				 const coord = [y,x]
+				 console.log('spawning food at', coord)
+				 this.foodTile = coord
+				 return coord
 			 }
 		}
 	}
@@ -191,8 +196,8 @@ export class SnakeGame{
 	_gameOver(game){
 		game.started = false
 		game.initialized = false
-		clearInterval(this.turnTimer)
-		if(game.onGameEnded) game.onGameEnded(game.stats)
+		
+		game.onGameEnded.trigger(game.stats)
 	}
 
 	_move(game){
@@ -227,9 +232,10 @@ export class SnakeGame{
 
 		game.stats.ticks++
 
-		if(game.onGameTick) game.onGameTick({
+		game.onBoardUpdated.trigger({
 			updatedTiles
 		})
+		game.onMoveCompleted.trigger()
 	}
 
 	//#endregion

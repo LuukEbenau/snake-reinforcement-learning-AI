@@ -1,10 +1,7 @@
 import React, { Component } from 'react'
 import styles from './tile.module.scss'
-import {TILE_EMPTY,TILE_SNAKE,TILE_FOOD, TILE_SNAKE_HEAD} from '../../constants/contentTypes'
+import {TILE_SNAKE,TILE_FOOD, TILE_SNAKE_HEAD} from '../../constants/contentTypes'
 export default class Tile extends Component {
-	constructor(props){
-		super(props)
-	}
 	render() {
 		let tileClass = styles.emptyTile
 		let c = this.props.content
@@ -15,7 +12,6 @@ export default class Tile extends Component {
 
 		return (
 			<div style={{width:this.props.width, height:this.props.height}} className={[styles.tile, tileClass].join(' ')}>
-
 			</div>
 		)
 	}
